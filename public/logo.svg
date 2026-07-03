@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F48FB1"/>
+      <stop offset="0.55" stop-color="#EC407A"/>
+      <stop offset="1" stop-color="#AD1457"/>
+    </linearGradient>
+    <linearGradient id="pot" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#FCE4EC"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="230" fill="url(#bg)"/>
+  <!-- steam curls -->
+  <g fill="none" stroke="#FFFFFF" stroke-width="34" stroke-linecap="round" opacity="0.95">
+    <path d="M400 330 q-40 -55 0 -105 q40 -50 0 -100"/>
+    <path d="M512 350 q-45 -60 0 -115 q45 -55 0 -110"/>
+    <path d="M624 330 q-40 -55 0 -105 q40 -50 0 -100"/>
+  </g>
+  <!-- pot lid handle -->
+  <circle cx="512" cy="398" r="30" fill="#FFF"/>
+  <!-- lid -->
+  <path d="M300 470 q212 -90 424 0 z" fill="url(#pot)"/>
+  <rect x="272" y="458" width="480" height="34" rx="17" fill="#FFF"/>
+  <!-- pot body -->
+  <path d="M300 492 h424 v150 q0 130 -212 130 q-212 0 -212 -130 z" fill="url(#pot)"/>
+  <!-- handles -->
+  <path d="M300 520 q-70 10 -60 70 q8 46 62 40" fill="none" stroke="#FFF" stroke-width="34" stroke-linecap="round"/>
+  <path d="M724 520 q70 10 60 70 q-8 46 -62 40" fill="none" stroke="#FFF" stroke-width="34" stroke-linecap="round"/>
+  <!-- flower on the pot -->
+  <g transform="translate(512 610)">
+    <circle cx="0" cy="-34" r="24" fill="#F06292"/>
+    <circle cx="32" cy="-10" r="24" fill="#F06292"/>
+    <circle cx="20" cy="28" r="24" fill="#F06292"/>
+    <circle cx="-20" cy="28" r="24" fill="#F06292"/>
+    <circle cx="-32" cy="-10" r="24" fill="#F06292"/>
+    <circle cx="0" cy="0" r="20" fill="#AD1457"/>
+  </g>
+  <!-- spoon & fork accents -->
+  <g stroke="#FFFFFF" stroke-width="26" stroke-linecap="round" opacity="0.9">
+    <line x1="180" y1="700" x2="180" y2="840"/>
+    <circle cx="180" cy="668" r="34" fill="#FFF" stroke="none"/>
+    <line x1="844" y1="700" x2="844" y2="840"/>
+    <line x1="820" y1="668" x2="820" y2="712"/>
+    <line x1="844" y1="660" x2="844" y2="712"/>
+    <line x1="868" y1="668" x2="868" y2="712"/>
+  </g>
+  <!-- sparkle -->
+  <g fill="#FFF" opacity="0.95">
+    <path d="M812 220 l14 40 40 14 -40 14 -14 40 -14 -40 -40 -14 40 -14 z"/>
+  </g>
+</svg>

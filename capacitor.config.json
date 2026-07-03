@@ -1,0 +1,9 @@
+{
+  "appId": "com.jodeltech.mykitchen",
+  "appName": "My Kitchen",
+  "webDir": "dist",
+  "server": {
+    "url": "https://YOUR-APP.vercel.app",
+    "cleartext": false
+  }
+}

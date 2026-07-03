@@ -1,0 +1,22 @@
+{
+  "name": "ite-nri-kitchen",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && npm run obfuscate",
+    "preview": "vite preview",
+    "obfuscate": "javascript-obfuscator dist/assets --output dist/assets --compact true --self-defending true --control-flow-flattening true --control-flow-flattening-threshold 0.5 --dead-code-injection true --dead-code-injection-threshold 0.2 --string-array true --string-array-encoding rc4 --string-array-threshold 0.75 --disable-console-output true --rename-globals false"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.4.0",
+    "javascript-obfuscator": "^4.1.0"
+  }
+}
