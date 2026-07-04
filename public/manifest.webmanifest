@@ -1,0 +1,31 @@
+{
+  "name": "My Kitchen — by Jodel Technologies",
+  "short_name": "My Kitchen",
+  "description": "Pantry tracking, age-aware portion scaling, a Nigerian + Cameroonian recipe book, and an automatic weekly cooking planner.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFF1F6",
+  "theme_color": "#D81B60",
+  "icons": [
+    {
+      "src": "/logo-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
