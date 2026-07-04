@@ -226,3 +226,76 @@ create policy "own state insert" on public.kitchen_state
   for insert with check (auth.uid() = user_id);
 create policy "own state update" on public.kitchen_state
   for update using (auth.uid() = user_id);
+
+-- ============================================================
+-- 5. DEVELOPER-CONTROLLED DEVICE APPROVAL  (added)
+-- The developer (admin) approves new devices — NOT the user's
+-- other device. New devices sit as 'pending' and the developer
+-- is alerted on WhatsApp from the app, then approves here.
+-- ============================================================
+
+-- Store the account email + device name on the device row so the
+-- admin can tell whose device is waiting.
+alter table public.devices add column if not exists user_email text;
+
+-- Let the admin read & manage every device row.
+drop policy if exists "admin manage devices" on public.devices;
+create policy "admin manage devices" on public.devices
+  for all using ((auth.jwt() ->> 'email') = 'jodeltechnologies92@gmail.com');
+
+-- Re-register: first device active; any later device is pending and
+-- records the account email for the admin's list.
+create or replace function public.register_device(p_device_id text, p_name text)
+returns text language plpgsql security definer set search_path = public as $$
+declare
+  v_other_active int;
+  v_status text;
+  v_email text;
+begin
+  select email into v_email from auth.users where id = auth.uid();
+
+  select count(*) into v_other_active
+  from devices
+  where user_id = auth.uid() and status = 'active' and device_id <> p_device_id;
+
+  insert into devices (user_id, device_id, device_name, user_email, status)
+  values (auth.uid(), p_device_id, p_name, v_email,
+          case when v_other_active = 0 then 'active' else 'pending' end)
+  on conflict (user_id, device_id) do update
+    set device_name = excluded.device_name,
+        user_email = excluded.user_email,
+        status = case
+          when devices.status = 'active' then 'active'
+          when v_other_active = 0 then 'active'
+          else 'pending'
+        end;
+
+  select status into v_status
+  from devices where user_id = auth.uid() and device_id = p_device_id;
+  return v_status;
+end $$;
+
+-- Admin-only: approve a pending device. Revokes any other device for
+-- that same user, then activates the chosen one.
+create or replace function public.admin_approve_device(p_row uuid)
+returns void language plpgsql security definer set search_path = public as $$
+declare v_user uuid;
+begin
+  if (auth.jwt() ->> 'email') <> 'jodeltechnologies92@gmail.com' then
+    raise exception 'Only the developer can approve devices';
+  end if;
+  select user_id into v_user from devices where id = p_row;
+  if v_user is null then raise exception 'Device not found'; end if;
+  update devices set status = 'revoked' where user_id = v_user and id <> p_row;
+  update devices set status = 'active'  where id = p_row;
+end $$;
+
+-- Admin-only: reject/deny a pending device.
+create or replace function public.admin_deny_device(p_row uuid)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if (auth.jwt() ->> 'email') <> 'jodeltechnologies92@gmail.com' then
+    raise exception 'Only the developer can deny devices';
+  end if;
+  update devices set status = 'revoked' where id = p_row;
+end $$;

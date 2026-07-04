@@ -14,7 +14,6 @@ export default function App() {
   const [session, setSession] = useState(undefined); // undefined = loading
   const [deviceStatus, setDeviceStatus] = useState(null); // active | pending | revoked
   const [profile, setProfile] = useState(null);
-  const [pendingDevices, setPendingDevices] = useState([]);
   const [showBilling, setShowBilling] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
 
@@ -36,12 +35,6 @@ export default function App() {
 
     const { data: prof } = await supabase.from("profiles").select("*").eq("id", session.user.id).single();
     setProfile(prof || { plan: "guest", full_name: "Guest" });
-
-    const { data: pend } = await supabase
-      .from("devices").select("*")
-      .eq("user_id", session.user.id).eq("status", "pending")
-      .neq("device_id", getDeviceId());
-    setPendingDevices(pend || []);
   }, [session]);
 
   useEffect(() => { refresh(); }, [refresh]);
@@ -92,26 +85,6 @@ export default function App() {
 
   return (
     <>
-      {pendingDevices.length > 0 && (
-        <div style={{ position: "fixed", top: 10, left: "50%", transform: "translateX(-50%)", zIndex: 100, background: "#fff", border: `2px solid ${C.rose}`, borderRadius: 16, padding: "12px 16px", boxShadow: "0 6px 24px rgba(0,0,0,0.18)", maxWidth: 420, width: "92%", fontFamily: "'Nunito', sans-serif" }}>
-          <div style={{ fontWeight: 800, color: C.deep, fontSize: 14 }}>🔔 New device wants to use your account</div>
-          {pendingDevices.map((d) => (
-            <div key={d.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8, gap: 8 }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: "#5D4037" }}>{d.device_name || "Unknown device"}</span>
-              <span style={{ display: "flex", gap: 6 }}>
-                <button style={{ background: C.rose, color: "#fff", border: "none", borderRadius: 999, padding: "5px 14px", fontWeight: 700, cursor: "pointer" }}
-                  onClick={async () => { await supabase.rpc("approve_device", { p_row: d.id }); logout(); }}>
-                  Approve (signs this device out)
-                </button>
-                <button style={{ background: "#FDE7EF", color: C.deep, border: `1.5px solid ${C.border}`, borderRadius: 999, padding: "5px 14px", fontWeight: 700, cursor: "pointer" }}
-                  onClick={async () => { await supabase.rpc("deny_device", { p_row: d.id }); refresh(); }}>
-                  Deny
-                </button>
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
       <KitchenApp profile={effProfile} session={session} onLogout={logout} onUpgrade={upgrade} cloudSave={cloudSave} cloudLoad={cloudLoad} />
       {showBilling && (
         <Billing profile={profile} onClose={() => setShowBilling(false)}
