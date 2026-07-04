@@ -5,7 +5,7 @@ export const DEV = {
   name: "Jodel Technologies",
   whatsapp: "+237678662454",
   whatsappLink: "https://wa.me/237678662454",
-  email: "jodeltechnologies92@gmail.com",
+  email: "jdtechnologies92@gmail.com",
   website: "https://jodeltech.vercel.app",
   momoNumber: "678662454",
 };
