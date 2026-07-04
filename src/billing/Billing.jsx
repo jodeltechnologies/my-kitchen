@@ -16,8 +16,21 @@ export default function Billing({ profile, onClose, onPaid }) {
   const [momoPhone, setMomoPhone] = useState("");
   const [pending, setPending] = useState(null);
   const [msg, setMsg] = useState(null);
+  const [coupon, setCoupon] = useState("");
+  const [couponMsg, setCouponMsg] = useState(null);
   const paypalRef = useRef(null);
   const cfa = toCFA(plan.usd);
+
+  const redeem = async () => {
+    if (!coupon.trim()) { setCouponMsg("Enter a coupon code."); return; }
+    const { data, error } = await supabase.rpc("redeem_coupon", { p_code: coupon.trim() });
+    if (error) { setCouponMsg(error.message); return; }
+    setCouponMsg(data || "Coupon applied!");
+    // If it granted access, refresh the account.
+    if (data && data.toLowerCase().includes("full access")) {
+      setTimeout(() => onPaid(), 1200);
+    }
+  };
 
   /* existing pending MoMo payment? */
   useEffect(() => {

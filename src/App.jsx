@@ -35,6 +35,11 @@ export default function App() {
 
     const { data: prof } = await supabase.from("profiles").select("*").eq("id", session.user.id).single();
     setProfile(prof || { plan: "guest", full_name: "Guest" });
+
+    // Keep the admin flag in sync with the admins table, then re-read.
+    await supabase.rpc("sync_admin_flag");
+    const { data: prof2 } = await supabase.from("profiles").select("*").eq("id", session.user.id).single();
+    if (prof2) setProfile(prof2);
   }, [session]);
 
   useEffect(() => { refresh(); }, [refresh]);
@@ -53,12 +58,13 @@ export default function App() {
 
   const upgrade = () => setShowBilling(true);
 
-  const isAdmin = session?.user?.email === DEV.email;
+  const isAdmin = profile?.is_admin === true || session?.user?.email === DEV.email;
 
-  // Full access = plan is 'full' AND the subscription hasn't expired.
+  // Full access = admin, OR plan is 'full' and not expired (null expiry = lifetime).
   const fullAccess =
-    profile?.plan === "full" &&
-    (!profile.plan_expires_at || new Date(profile.plan_expires_at) > new Date());
+    isAdmin ||
+    (profile?.plan === "full" &&
+      (!profile.plan_expires_at || new Date(profile.plan_expires_at) > new Date()));
   const effProfile = profile ? { ...profile, plan: fullAccess ? "full" : "guest" } : null;
 
   const cloudSave = async (data) => {
