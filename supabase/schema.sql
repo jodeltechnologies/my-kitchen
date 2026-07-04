@@ -137,7 +137,7 @@ create policy "own payments insert" on public.payments
   for insert with check (auth.uid() = user_id and status = 'pending');
 -- The developer (admin) can see and manage every payment:
 create policy "admin manage payments" on public.payments
-  for all using ((auth.jwt() ->> 'email') = 'jodeltechnologies92@gmail.com');
+  for all using ((auth.jwt() ->> 'email') = 'jdtechnologies92@gmail.com');
 
 -- Pricing lives in the database so the client can't tamper with it.
 create or replace function public.price_for(p_period text)
@@ -200,7 +200,7 @@ create or replace function public.review_payment(p_id uuid, p_approve boolean)
 returns void language plpgsql security definer set search_path = public as $$
 declare v payments;
 begin
-  if (auth.jwt() ->> 'email') <> 'jodeltechnologies92@gmail.com' then
+  if (auth.jwt() ->> 'email') <> 'jdtechnologies92@gmail.com' then
     raise exception 'Only the developer can validate payments';
   end if;
   select * into v from payments where id = p_id and status = 'pending';
@@ -241,7 +241,7 @@ alter table public.devices add column if not exists user_email text;
 -- Let the admin read & manage every device row.
 drop policy if exists "admin manage devices" on public.devices;
 create policy "admin manage devices" on public.devices
-  for all using ((auth.jwt() ->> 'email') = 'jodeltechnologies92@gmail.com');
+  for all using ((auth.jwt() ->> 'email') = 'jdtechnologies92@gmail.com');
 
 -- Re-register: first device active; any later device is pending and
 -- records the account email for the admin's list.
@@ -281,7 +281,7 @@ create or replace function public.admin_approve_device(p_row uuid)
 returns void language plpgsql security definer set search_path = public as $$
 declare v_user uuid;
 begin
-  if (auth.jwt() ->> 'email') <> 'jodeltechnologies92@gmail.com' then
+  if (auth.jwt() ->> 'email') <> 'jdtechnologies92@gmail.com' then
     raise exception 'Only the developer can approve devices';
   end if;
   select user_id into v_user from devices where id = p_row;
@@ -294,8 +294,195 @@ end $$;
 create or replace function public.admin_deny_device(p_row uuid)
 returns void language plpgsql security definer set search_path = public as $$
 begin
-  if (auth.jwt() ->> 'email') <> 'jodeltechnologies92@gmail.com' then
+  if (auth.jwt() ->> 'email') <> 'jdtechnologies92@gmail.com' then
     raise exception 'Only the developer can deny devices';
   end if;
   update devices set status = 'revoked' where id = p_row;
+end $$;
+
+-- ============================================================
+-- 6. ADMINS, FREE ACCESS GRANTS & COUPONS  (added)
+-- ============================================================
+
+-- 6a. ADMINS -------------------------------------------------
+-- A list of admin emails, so you can promote/remove admins later
+-- WITHOUT changing code. The first admin is seeded below.
+create table if not exists public.admins (
+  email text primary key,
+  created_at timestamptz default now()
+);
+
+alter table public.admins enable row level security;
+
+-- Anyone logged in can check IF THEY THEMSELVES are an admin.
+drop policy if exists "read own admin row" on public.admins;
+create policy "read own admin row" on public.admins
+  for select using ((auth.jwt() ->> 'email') = email);
+
+-- Admins can see and manage the whole admin list.
+drop policy if exists "admins manage admins" on public.admins;
+create policy "admins manage admins" on public.admins
+  for all using (exists (select 1 from admins a where a.email = (auth.jwt() ->> 'email')));
+
+-- Seed your admin accounts (edit / add rows here anytime).
+insert into public.admins (email) values
+  ('jdtechnologies92@gmail.com'),
+  ('ngwana2015@gmail.com')
+on conflict (email) do nothing;
+
+-- Helper: is the current user an admin?
+create or replace function public.is_admin()
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists (select 1 from admins where email = (auth.jwt() ->> 'email'));
+$$;
+
+-- A profile flag the app reads to know whether to show admin tools
+-- and to grant full access without payment.
+alter table public.profiles add column if not exists is_admin boolean not null default false;
+
+-- Keep profiles.is_admin in sync with the admins table on login.
+create or replace function public.sync_admin_flag()
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  update profiles
+     set is_admin = exists (select 1 from admins where email = (auth.jwt() ->> 'email'))
+   where id = auth.uid();
+end $$;
+
+-- Admin action: promote another user to admin by email.
+create or replace function public.add_admin(p_email text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'Only an admin can add admins'; end if;
+  insert into admins (email) values (lower(trim(p_email))) on conflict do nothing;
+  update profiles p set is_admin = true
+    from auth.users u
+   where u.id = p.id and u.email = lower(trim(p_email));
+end $$;
+
+-- Admin action: remove an admin by email.
+create or replace function public.remove_admin(p_email text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'Only an admin can remove admins'; end if;
+  delete from admins where email = lower(trim(p_email));
+  update profiles p set is_admin = false
+    from auth.users u
+   where u.id = p.id and u.email = lower(trim(p_email));
+end $$;
+
+-- 6b. GRANT FREE ACCESS --------------------------------------
+-- Admin action: give a specific user full access for N months
+-- (or forever) with NO payment. p_months = null means lifetime.
+create or replace function public.grant_free_access(p_email text, p_months int)
+returns void language plpgsql security definer set search_path = public as $$
+declare v_user uuid;
+begin
+  if not is_admin() then raise exception 'Only an admin can grant access'; end if;
+  select id into v_user from auth.users where email = lower(trim(p_email));
+  if v_user is null then raise exception 'No user with that email'; end if;
+
+  if p_months is null then
+    update profiles set plan = 'full', has_paid_initiation = true,
+      plan_expires_at = null            -- null expiry = lifetime access
+     where id = v_user;
+  else
+    update profiles set plan = 'full', has_paid_initiation = true,
+      plan_expires_at = greatest(coalesce(plan_expires_at, now()), now())
+                        + (p_months || ' months')::interval
+     where id = v_user;
+  end if;
+end $$;
+
+-- Admin action: revoke access (send a user back to guest).
+create or replace function public.revoke_access(p_email text)
+returns void language plpgsql security definer set search_path = public as $$
+declare v_user uuid;
+begin
+  if not is_admin() then raise exception 'Only an admin can revoke access'; end if;
+  select id into v_user from auth.users where email = lower(trim(p_email));
+  if v_user is null then raise exception 'No user with that email'; end if;
+  update profiles set plan = 'guest', plan_expires_at = null where id = v_user;
+end $$;
+
+-- 6c. COUPONS ------------------------------------------------
+-- Codes an admin creates. A user redeems a code to get free months
+-- (percent-off discounts can be layered on later at checkout).
+create table if not exists public.coupons (
+  code text primary key,
+  free_months int,                 -- e.g. 1, 6, 12  (null if percent type)
+  percent_off int,                 -- e.g. 50 = 50% off (null if free-months type)
+  max_uses int default 1,          -- how many times it can be used in total
+  used_count int not null default 0,
+  active boolean not null default true,
+  expires_at timestamptz,          -- null = never expires
+  created_at timestamptz default now()
+);
+
+alter table public.coupons enable row level security;
+
+-- Admins manage coupons.
+drop policy if exists "admins manage coupons" on public.coupons;
+create policy "admins manage coupons" on public.coupons
+  for all using (is_admin());
+
+-- Track who redeemed what (prevents the same user reusing a code).
+create table if not exists public.coupon_redemptions (
+  id uuid primary key default gen_random_uuid(),
+  code text references coupons(code) on delete cascade,
+  user_id uuid references auth.users on delete cascade,
+  created_at timestamptz default now(),
+  unique (code, user_id)
+);
+
+alter table public.coupon_redemptions enable row level security;
+drop policy if exists "own redemptions" on public.coupon_redemptions;
+create policy "own redemptions" on public.coupon_redemptions
+  for select using (auth.uid() = user_id or is_admin());
+
+-- Admin action: create a coupon that grants free months.
+create or replace function public.create_coupon(
+  p_code text, p_free_months int, p_percent_off int, p_max_uses int, p_expires timestamptz)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'Only an admin can create coupons'; end if;
+  insert into coupons (code, free_months, percent_off, max_uses, expires_at)
+  values (upper(trim(p_code)), p_free_months, p_percent_off, coalesce(p_max_uses,1), p_expires);
+end $$;
+
+-- Admin action: turn a coupon off.
+create or replace function public.deactivate_coupon(p_code text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'Only an admin can manage coupons'; end if;
+  update coupons set active = false where code = upper(trim(p_code));
+end $$;
+
+-- User action: redeem a coupon. Free-months coupons unlock access
+-- immediately. Returns a message describing what happened.
+create or replace function public.redeem_coupon(p_code text)
+returns text language plpgsql security definer set search_path = public as $$
+declare c coupons;
+begin
+  select * into c from coupons where code = upper(trim(p_code));
+  if c.code is null then raise exception 'Invalid coupon code'; end if;
+  if not c.active then raise exception 'This coupon is no longer active'; end if;
+  if c.expires_at is not null and c.expires_at < now() then raise exception 'This coupon has expired'; end if;
+  if c.used_count >= c.max_uses then raise exception 'This coupon has reached its usage limit'; end if;
+  if exists (select 1 from coupon_redemptions where code = c.code and user_id = auth.uid()) then
+    raise exception 'You have already used this coupon';
+  end if;
+
+  insert into coupon_redemptions (code, user_id) values (c.code, auth.uid());
+  update coupons set used_count = used_count + 1 where code = c.code;
+
+  if c.free_months is not null then
+    update profiles set plan = 'full', has_paid_initiation = true,
+      plan_expires_at = greatest(coalesce(plan_expires_at, now()), now())
+                        + (c.free_months || ' months')::interval
+     where id = auth.uid();
+    return 'Success! You now have ' || c.free_months || ' month(s) of full access.';
+  else
+    return 'Coupon applied: ' || c.percent_off || '% off at checkout.';
+  end if;
 end $$;

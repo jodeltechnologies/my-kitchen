@@ -63,7 +63,9 @@ function ageBandLabel(age) {
 
 /* ================= PANTRY SEED ================= */
 let _pid = 1;
-const P = (name, cat, qty, unit, low) => ({ id: _pid++, name, cat, qty, unit, low });
+// New users start with an EMPTY Food Store. Seed provides the catalog + sensible
+// low-stock thresholds; quantities begin at 0 so users add what they actually own.
+const P = (name, cat, qty, unit, low) => ({ id: _pid++, name, cat, qty: 0, unit, low });
 const SEED_PANTRY = [
   P("Rice", "Grains", 5000, "g", 1000),
   P("Beans", "Grains", 2000, "g", 500),
@@ -133,6 +135,16 @@ const SEED_PANTRY = [
   P("Curry powder", "Spices", 50, "g", 15),
   P("Thyme", "Spices", 30, "g", 10),
   P("Yaji spice", "Spices", 50, "g", 15),
+  // ---- Cameroonian ingredients (common local names) ----
+  P("Groundnut (raw)", "Soup items", 500, "g", 150),
+  P("Cocoyam leaves", "Vegetables", 200, "g", 60),
+  P("Huckleberry (njama njama)", "Vegetables", 300, "g", 100),
+  P("Nkui powder", "Soup items", 100, "g", 30),
+  P("Country onions", "Spices", 30, "g", 10),
+  P("Pepper soup spice", "Spices", 50, "g", 15),
+  P("Goat meat", "Protein", 0, "g", 300),
+  P("Garlic", "Fruits & Veg", 6, "pcs", 2),
+  P("Plantain leaves", "Vegetables", 6, "pcs", 2),
 ];
 
 /* ================= RECIPES (quantities are PER 1.0 ADULT PORTION) ================= */
@@ -363,6 +375,56 @@ const RECIPES = [
      "Whisk palm oil while adding the potash water little by little until it emulsifies and turns bright yellow.",
      "Season the yellow soup with achu spice and salt, then add the meats.",
      "Mould the achu on a plate, make a well in the centre, and pour in the yellow soup."]),
+  R("Ndolé", "Cameroon (SW)", "main", "85 min", "miondo, bobolo or white rice",
+    [I("Bitterleaf (washed)", 70, "g"), I("Groundnut (raw)", 90, "g"), I("Beef", 100, "g"), I("Dried fish", 40, "g"), I("Crayfish (ground)", 10, "g"), I("Palm oil", 30, "ml"), I("Fresh pepper", 0.5, "pcs"), I("Onions", 0.3, "pcs"), I("Garlic", 0.5, "pcs"), I("Seasoning cubes", 1, "cubes")],
+    ["Wash the bitterleaf repeatedly to remove the bitterness, or use ready-washed leaves.",
+     "Boil the raw groundnuts until soft, then blend into a smooth paste.",
+     "Season and boil the beef with onion and seasoning until tender; keep the stock.",
+     "Add the groundnut paste to the stock and simmer, stirring, until it thickens and the oil rises.",
+     "Stir in the bitterleaf, dried fish, crayfish and pepper; simmer 15 minutes.",
+     "Fry a little onion and garlic in oil and stir into the pot. Serve with miondo, bobolo or rice."]),
+  R("Ekwang", "Cameroon (SW)", "main", "120 min", null,
+    [I("Cocoyam", 300, "g"), I("Cocoyam leaves", 80, "g"), I("Palm oil", 40, "ml"), I("Dried fish", 40, "g"), I("Assorted meat", 80, "g"), I("Crayfish (ground)", 10, "g"), I("Fresh pepper", 0.5, "pcs"), I("Onions", 0.3, "pcs"), I("Seasoning cubes", 1, "cubes")],
+    ["Peel and grate the raw cocoyam into a smooth paste; season lightly.",
+     "Wrap small spoonfuls of the cocoyam paste inside tender cocoyam leaves into little parcels.",
+     "Line a pot and arrange the wraps; add water, dried fish, meat, crayfish and pepper.",
+     "Cook gently for about an hour, adding palm oil and seasoning midway, until soft and rich.",
+     "Shake the pot (don't stir) so the wraps stay whole; serve hot in its red oil sauce."]),
+  R("Njama Njama & Corn Fufu", "Cameroon (NW)", "main", "50 min", "corn fufu",
+    [I("Huckleberry (njama njama)", 120, "g"), I("Corn flour", 120, "g"), I("Palm oil", 25, "ml"), I("Onions", 0.3, "pcs"), I("Fresh pepper", 0.3, "pcs"), I("Dried fish", 30, "g"), I("Salt", 2, "g"), I("Seasoning cubes", 1, "cubes")],
+    ["Parboil the huckleberry (njama njama) leaves briefly, then drain to reduce bitterness.",
+     "Heat palm oil, fry sliced onions and pepper, then add the leaves.",
+     "Add dried fish and seasoning; simmer 10 minutes until well combined.",
+     "Corn fufu: rain corn flour into boiling water, stirring hard until stiff and smooth; steam briefly.",
+     "Mould the fufu and serve with the njama njama — the everyday pride of the Northwest."]),
+  R("Nkui", "Cameroon (NW)", "main", "60 min", "fufu corn or water fufu",
+    [I("Nkui powder", 20, "g"), I("Assorted meat", 120, "g"), I("Dried fish", 40, "g"), I("Crayfish (ground)", 10, "g"), I("Palm oil", 25, "ml"), I("Fresh pepper", 0.4, "pcs"), I("Onions", 0.3, "pcs"), I("Seasoning cubes", 1, "cubes")],
+    ["Season and boil the assorted meat and dried fish until tender; keep the stock.",
+     "Whisk the nkui powder into warm stock until it turns into a smooth, drawy (slippery) soup.",
+     "Add crayfish, pepper, onion and palm oil; season to taste.",
+     "Simmer gently, stirring, until the soup draws and thickens.",
+     "Serve the slippery nkui with fufu corn — a Northwest celebration dish."]),
+  R("Mbanga Soup (Banga)", "Cameroon (SW)", "main", "80 min", "water fufu or miondo",
+    [I("Palm fruit concentrate", 120, "g"), I("Catfish", 120, "g"), I("Dried fish", 30, "g"), I("Crayfish (ground)", 10, "g"), I("Fresh pepper", 0.5, "pcs"), I("Onions", 0.3, "pcs"), I("Country onions", 3, "g"), I("Seasoning cubes", 1, "cubes")],
+    ["Simmer the palm fruit concentrate with a little water to form the banga base.",
+     "Season and add the catfish and dried fish; cook gently so the fish stays whole.",
+     "Add crayfish, pepper, onion and ground country-onion spice.",
+     "Simmer 20–25 minutes until the soup is thick and glossy with red oil on top.",
+     "Serve hot with water fufu or miondo."]),
+  R("Kwacoco Bible", "Cameroon (SW)", "main", "110 min", null,
+    [I("Cocoyam", 300, "g"), I("Palm oil", 45, "ml"), I("Dried fish", 40, "g"), I("Crayfish (ground)", 10, "g"), I("Fresh pepper", 0.4, "pcs"), I("Plantain leaves", 2, "pcs"), I("Onions", 0.3, "pcs"), I("Seasoning cubes", 1, "cubes")],
+    ["Grate the raw cocoyam into a soft paste and season with crayfish, pepper and seasoning.",
+     "Work in the red palm oil until the paste turns a rich orange.",
+     "Wrap the paste in plantain leaves into a large parcel (the 'bible').",
+     "Steam the parcel for about 1.5 hours until firm and cooked through.",
+     "Slice and serve with banga soup or pepper soup — a coastal Southwest favourite."]),
+  R("Pepper Soup (Nkang)", "Cameroon (SW)", "main", "45 min", "plain rice or alone",
+    [I("Goat meat", 150, "g"), I("Pepper soup spice", 6, "g"), I("Fresh pepper", 0.6, "pcs"), I("Onions", 0.3, "pcs"), I("Country onions", 3, "g"), I("Scent leaves", 6, "g"), I("Seasoning cubes", 1, "cubes"), I("Salt", 2, "g")],
+    ["Wash and season the goat meat; boil with onion until nearly tender.",
+     "Add the pepper soup spice, ground country onion and fresh pepper.",
+     "Simmer until the meat is soft and the broth is fragrant and light.",
+     "Stir in torn scent leaves at the end and adjust salt.",
+     "Serve piping hot as a peppery broth — great for cold evenings and recovery."]),
 ];
 
 /* Shelf life & freezer flags: [days a pot lasts, freezer-friendly] */
@@ -378,6 +440,9 @@ const MEAL_META = {
   "White Rice & Chicken Stew": [2, true], "Eru with Waterfufu": [3, true],
   "Kati Kati with Corn Fufu": [2, true], "Corn Chaff": [3, true],
   "Achu & Yellow Soup": [2, false],
+  "Ndolé": [3, true], "Ekwang": [2, false], "Njama Njama & Corn Fufu": [2, false],
+  "Nkui": [2, true], "Mbanga Soup (Banga)": [3, true], "Kwacoco Bible": [2, true],
+  "Pepper Soup (Nkang)": [2, false],
 };
 RECIPES.forEach((r) => {
   const m = MEAL_META[r.name] || [1, false];
@@ -416,56 +481,102 @@ function availabilityScore(recipe, pantry, portions) {
   return have / recipe.ingredients.length;
 }
 
-function generatePlan(mealsPerDay, cookSessions, repeatIds, pantry, portions) {
+// Which cuisine does a recipe belong to?
+function cuisineOf(r) {
+  return r.origin.startsWith("Cameroon") ? "Cameroon" : "Nigeria";
+}
+
+// Filter the recipe pool to the chosen cuisine ("Nigeria" | "Cameroon" | "Both").
+function poolForCuisine(type, cuisine) {
+  return RECIPES.filter((r) => {
+    if (r.type !== type) return false;
+    if (cuisine === "Both") return true;
+    return cuisineOf(r) === cuisine;
+  });
+}
+
+/*
+ * Smarter weekly plan.
+ *  - cuisine: "Nigeria" | "Cameroon" | "Both" — limits which dishes appear.
+ *  - cookAhead: how many days one fresh pot should feed (1 = cook every meal,
+ *    2 or 3 = cook once, then carry over / freeze for the next day(s)).
+ *  - Never repeats the same MAIN on consecutive days unless it is an intended
+ *    carryover from the pot you just cooked.
+ *  - Rotates proteins/dishes so the week feels varied and professional.
+ */
+function generatePlan(mealsPerDay, cookSessions, repeatIds, pantry, portions, cuisine = "Both", cookAhead = 1) {
   const mealNames = mealsPerDay === 1 ? ["Dinner"] : mealsPerDay === 2 ? ["Lunch", "Dinner"] : ["Breakfast", "Lunch", "Dinner"];
   const slots = [];
   DAYS.forEach((day) => mealNames.forEach((meal) => slots.push({ day, meal })));
-  const total = slots.length;
-  const cooks = Math.min(Math.max(cookSessions, 1), total);
 
-  const used = new Set();
-  let lastMain = null; // { id, dayIdx }
-  let lastBreakfast = null;
+  const usedMains = new Set();     // mains already cooked this week (avoid duplicates)
+  const usedBreakfast = new Set();
+  let lastMainId = null;           // the id of the most recently cooked main
+  let potLeft = 0;                 // how many more days the current pot can serve
+  let potInfo = null;              // { id, cookDayIdx, lasts, freeze }
+  let prevDayMainId = null;        // main served on the previous day (block consecutives)
+  let curDayIdx = -1;
+  let curDayMainId = null;
 
-  return slots.map((slot, i) => {
+  const pickMain = (dayIdx) => {
+    let pool = poolForCuisine("main", cuisine);
+    if (pool.length === 0) pool = RECIPES.filter((r) => r.type === "main"); // safety
+    // Prefer dishes not yet used this week, and never the same as yesterday's main.
+    let cand = pool.filter((r) => !usedMains.has(r.id) && r.id !== prevDayMainId);
+    if (cand.length === 0) cand = pool.filter((r) => r.id !== prevDayMainId);
+    if (cand.length === 0) cand = pool;
+    // Rank by what the Food Store can already cook, plus randomness for variety.
+    cand = cand
+      .map((r) => ({ r, s: availabilityScore(r, pantry, portions) + Math.random() * 0.5 }))
+      .sort((a, b) => b.s - a.s);
+    return cand[0].r;
+  };
+
+  const result = slots.map((slot, i) => {
     const dayIdx = Math.floor(i / mealsPerDay);
+    if (dayIdx !== curDayIdx) {
+      // New day: yesterday's cooked main becomes "prevDay" to block back-to-back repeats.
+      if (curDayMainId) prevDayMainId = curDayMainId;
+      curDayIdx = dayIdx;
+      curDayMainId = null;
+    }
     const isBreakfast = slot.meal === "Breakfast";
-    const shouldCook = Math.floor(((i + 1) * cooks) / total) > Math.floor((i * cooks) / total);
 
-    if (shouldCook) {
-      const pool = RECIPES.filter((r) => (isBreakfast ? r.type === "breakfast" : r.type === "main"));
-      let candidates;
-      if (isBreakfast) {
-        // Breakfasts may repeat within the week — prefer variety, but never force it.
-        const unused = pool.filter((r) => !used.has(r.id));
-        candidates = unused.length ? unused : pool;
-      } else {
-        candidates = pool.filter((r) => !used.has(r.id) || repeatIds.includes(r.id));
-        if (candidates.length === 0) candidates = pool;
-      }
-      candidates = candidates
-        .map((r) => ({ r, s: availabilityScore(r, pantry, portions) + Math.random() * 0.35 }))
-        .sort((a, b) => b.s - a.s);
-      const pick = candidates[0].r;
-      used.add(pick.id);
-      if (isBreakfast) lastBreakfast = { id: pick.id, dayIdx };
-      else lastMain = { id: pick.id, dayIdx };
+    if (isBreakfast) {
+      // Breakfasts: light rotation, may repeat later in the week but not day-to-day.
+      let pool = poolForCuisine("breakfast", cuisine);
+      if (pool.length === 0) pool = RECIPES.filter((r) => r.type === "breakfast");
+      let cand = pool.filter((r) => !usedBreakfast.has(r.id));
+      if (cand.length === 0) { usedBreakfast.clear(); cand = pool; }
+      cand = cand.map((r) => ({ r, s: availabilityScore(r, pantry, portions) + Math.random() * 0.5 })).sort((a, b) => b.s - a.s);
+      const pick = cand[0].r;
+      usedBreakfast.add(pick.id);
       return { ...slot, recipeId: pick.id, cook: true, tag: "fresh" };
     }
 
-    // Not a cooking slot — serve from an existing pot.
-    if (isBreakfast) {
-      const src = lastBreakfast || lastMain;
-      return { ...slot, recipeId: src ? src.id : null, cook: false, tag: "repeat" };
+    // MAIN meals: use carryover pot if one is still good, else cook fresh.
+    if (potLeft > 0 && potInfo) {
+      potLeft -= 1;
+      const daysIn = dayIdx - potInfo.cookDayIdx + 1;
+      const withinShelf = daysIn <= (potInfo.lasts || 1);
+      const tag = withinShelf ? "leftover" : (potInfo.freeze ? "freezer" : "leftover");
+      curDayMainId = potInfo.id;
+      return { ...slot, recipeId: potInfo.id, cook: false, tag, potDay: daysIn, potLasts: potInfo.lasts, fromFreezer: !withinShelf && potInfo.freeze };
     }
-    if (lastMain) {
-      const r = RECIPES.find((x) => x.id === lastMain.id);
-      const withinShelf = dayIdx - lastMain.dayIdx < (r.lasts || 1);
-      const tag = withinShelf ? "leftover" : r.freeze ? "freezer" : "leftover";
-      return { ...slot, recipeId: lastMain.id, cook: false, tag, potDay: dayIdx - lastMain.dayIdx + 1, potLasts: r.lasts };
-    }
-    return { ...slot, recipeId: null, cook: false, tag: "leftover" };
+
+    // Cook a fresh main.
+    const pick = pickMain(dayIdx);
+    usedMains.add(pick.id);
+    lastMainId = pick.id;
+    curDayMainId = pick.id;
+    // Set up the pot: how many future MAIN slots it will cover.
+    const span = Math.max(1, Math.min(cookAhead, pick.lasts && pick.freeze ? cookAhead : (pick.lasts || 1)));
+    potInfo = { id: pick.id, cookDayIdx: dayIdx, lasts: pick.lasts || 1, freeze: !!pick.freeze };
+    potLeft = span - 1; // this slot is day 1; remaining days are carryover
+    return { ...slot, recipeId: pick.id, cook: true, tag: "fresh", cookAhead: span };
   });
+
+  return result;
 }
 
 /* ================= SMALL UI PIECES ================= */
@@ -514,11 +625,17 @@ export default function KitchenApp({ profile, session, onLogout, onUpgrade, clou
   const [newItem, setNewItem] = useState({ name: "", qty: "", unit: "g", cat: "Grains" });
   const [pantrySearch, setPantrySearch] = useState("");
   const [recipeFilter, setRecipeFilter] = useState("All");
+  const [cuisine, setCuisine] = useState("Both");   // Nigeria | Cameroon | Both
+  const [cookAhead, setCookAhead] = useState(1);      // 1 = cook each meal; 2/3 = cook once, eat 2/3 days
+  const [showNotif, setShowNotif] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
 
   const portions = useMemo(() => family.reduce((s, m) => s + portionFactor(m.age), 0), [family]);
   const totalSlots = mealsPerDay * 7;
   const effCook = Math.min(cookSessions, totalSlots);
-  const lowStock = pantry.filter((p) => p.qty <= p.low);
+  // Low stock = items the user actually keeps (has added stock to at least once)
+  // that have now run low. Brand-new empty-store items aren't flagged until used.
+  const lowStock = pantry.filter((p) => p.tracked && p.qty <= p.low);
 
   /* ---- cloud sync ---- */
   useEffect(() => {
@@ -530,22 +647,59 @@ export default function KitchenApp({ profile, session, onLogout, onUpgrade, clou
         d.mealsPerDay && setMealsPerDay(d.mealsPerDay);
         d.cookSessions && setCookSessions(d.cookSessions);
         d.repeatIds && setRepeatIds(d.repeatIds);
+        d.cuisine && setCuisine(d.cuisine);
+        d.cookAhead && setCookAhead(d.cookAhead);
         d.plan && setPlan(d.plan);
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /* ---- Welcome message once per login/session ---- */
+  useEffect(() => {
+    try {
+      const key = "mk_welcomed_" + (session?.user?.id || "guest");
+      if (!sessionStorage.getItem(key)) {
+        setShowWelcome(true);
+        sessionStorage.setItem(key, "1");
+      }
+    } catch { /* sessionStorage may be unavailable */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /* ---- Notifications: next meal + low stock ---- */
+  const notifications = useMemo(() => {
+    const list = [];
+    // Next upcoming meal from the plan (first cook-fresh slot).
+    if (plan) {
+      const next = plan.find((s) => s.cook && s.recipeId);
+      if (next) {
+        const r = RECIPES.find((x) => x.id === next.recipeId);
+        if (r) list.push({ icon: "🍲", kind: "meal", text: `Next to cook: ${r.name} — ${next.day} ${next.meal.toLowerCase()}` });
+      }
+      const freezerMeals = plan.filter((s) => s.fromFreezer).length;
+      if (freezerMeals > 0) list.push({ icon: "❄️", kind: "meal", text: `${freezerMeals} meal(s) this week come from the freezer — remember to defrost ahead.` });
+    }
+    // Low stock items.
+    lowStock.forEach((p) => {
+      list.push({ icon: "⚠️", kind: "stock", text: `Low on ${p.name} — ${p.qty <= 0 ? "you're out" : fmtQty(p.qty, p.unit) + " left"}.` });
+    });
+    if (list.length === 0) list.push({ icon: "✅", kind: "ok", text: "All good! No meal or stock alerts right now." });
+    return list;
+  }, [plan, lowStock]);
+
+  const alertCount = notifications.filter((n) => n.kind !== "ok").length;
+
   const saveCloud = async () => {
     if (isGuest) { showToast("⭐ Cloud sync is a full-access feature — upgrade to keep your kitchen everywhere"); return; }
-    const res = await cloudSave({ family, pantry, mealsPerDay, cookSessions, repeatIds, plan });
+    const res = await cloudSave({ family, pantry, mealsPerDay, cookSessions, repeatIds, cuisine, cookAhead, plan });
     showToast(res && res.error ? "Cloud save failed: " + res.error.message : "Kitchen saved to the cloud ☁️");
   };
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2600); };
 
   const cookRecipe = (recipe) => {
-    if (isGuest) { showToast("🔒 Cooking with pantry deduction is for full members — upgrade to unlock"); return; }
+    if (isGuest) { showToast("🔒 Cooking with Food Store deduction is for full members — upgrade to unlock"); return; }
     setPantry((prev) => {
       const next = prev.map((p) => ({ ...p }));
       recipe.ingredients.forEach((ing) => {
@@ -559,8 +713,8 @@ export default function KitchenApp({ profile, session, onLogout, onUpgrade, clou
     });
     showToast(
       recipe.freeze
-        ? `Cooked ${recipe.name} for ${portions.toFixed(2)} portions — pantry updated 🍲 Tip: freeze the extra ❄️`
-        : `Cooked ${recipe.name} for ${portions.toFixed(2)} portions — pantry updated 🍲`
+        ? `Cooked ${recipe.name} for ${portions.toFixed(2)} portions — Food Store updated 🍲 Tip: freeze the extra ❄️`
+        : `Cooked ${recipe.name} for ${portions.toFixed(2)} portions — Food Store updated 🍲`
     );
   };
 
@@ -611,7 +765,7 @@ export default function KitchenApp({ profile, session, onLogout, onUpgrade, clou
           </span>
         </div>
         <div style={{ color: C.brownSoft, fontSize: 14, fontWeight: 600, marginTop: 4 }}>
-          Your African kitchen companion — stock, recipes & weekly cooking plans
+          Your African kitchen companion — food store, recipes & weekly cooking plans
         </div>
         <div className="flex flex-wrap justify-center items-center gap-2 mt-3">
           <Badge color={C.deep} bg={C.softer}>👤 {profile.full_name || session.user.email || "Guest"}</Badge>
@@ -624,11 +778,19 @@ export default function KitchenApp({ profile, session, onLogout, onUpgrade, clou
           {!isGuest && (
             <button style={{ ...btnSoft, padding: "4px 14px", fontSize: 13 }} onClick={saveCloud}>☁️ Save to cloud</button>
           )}
+          <button style={{ ...btnSoft, padding: "4px 14px", fontSize: 13, position: "relative" }} onClick={() => setShowNotif(true)}>
+            🔔 Alerts
+            {alertCount > 0 && (
+              <span style={{ position: "absolute", top: -6, right: -6, background: C.rose, color: "#fff", borderRadius: 999, minWidth: 18, height: 18, fontSize: 11, fontWeight: 800, display: "inline-flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>
+                {alertCount}
+              </span>
+            )}
+          </button>
           <button style={{ ...btnSoft, padding: "4px 14px", fontSize: 13 }} onClick={onLogout}>Log out</button>
         </div>
         <div className="flex flex-wrap justify-center gap-2 mt-4">
           <TabBtn id="dashboard" icon="🏠" label="Dashboard" />
-          <TabBtn id="pantry" icon="🧺" label="Pantry" />
+          <TabBtn id="pantry" icon="🥘" label="Food Store" />
           <TabBtn id="family" icon="👨‍👩‍👧‍👦" label="Family" />
           <TabBtn id="recipes" icon="📖" label="Recipes" />
           <TabBtn id="plan" icon="🗓️" label="Weekly Plan" />
@@ -643,7 +805,7 @@ export default function KitchenApp({ profile, session, onLogout, onUpgrade, clou
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
               {[
                 { label: "Family portions", value: portions.toFixed(2), icon: "👨‍👩‍👧‍👦" },
-                { label: "Pantry items", value: pantry.length, icon: "🧺" },
+                { label: "Store items", value: pantry.filter((p) => p.qty > 0).length, icon: "🥘" },
                 { label: "Low stock", value: lowStock.length, icon: "⚠️" },
                 { label: "Meals planned", value: plan ? plan.length : 0, icon: "🗓️" },
               ].map((s, i) => (
@@ -672,8 +834,8 @@ export default function KitchenApp({ profile, session, onLogout, onUpgrade, clou
 
               <div className="p-5" style={card}>
                 <h3 style={{ fontFamily: "'Fredoka', sans-serif", color: C.deep, fontSize: 18, fontWeight: 600 }}>🛒 Shopping list for this week's plan</h3>
-                {!plan && <p style={{ fontSize: 13, color: C.brownSoft, marginTop: 8 }}>Generate a weekly plan first, and anything your pantry can't cover will appear here.</p>}
-                {plan && missingForPlan.length === 0 && <p style={{ color: C.green, fontWeight: 700, marginTop: 8 }}>Your pantry covers the whole week! 💪</p>}
+                {!plan && <p style={{ fontSize: 13, color: C.brownSoft, marginTop: 8 }}>Generate a weekly plan first, and anything your Food Store can't cover will appear here.</p>}
+                {plan && missingForPlan.length === 0 && <p style={{ color: C.green, fontWeight: 700, marginTop: 8 }}>Your Food Store covers the whole week! 💪</p>}
                 <div className="flex flex-col gap-2 mt-2">
                   {missingForPlan.slice(0, 10).map((m, i) => (
                     <div key={i} className="flex justify-between items-center" style={{ background: C.soft, borderRadius: 12, padding: "8px 12px" }}>
@@ -690,7 +852,7 @@ export default function KitchenApp({ profile, session, onLogout, onUpgrade, clou
         {/* ============ PANTRY ============ */}
         {tab === "pantry" && (
           <div>
-            <SectionTitle icon="🧺" sub="What's in your kitchen right now. Cooking a meal deducts from here automatically.">Kitchen Stock</SectionTitle>
+            <SectionTitle icon="🧺" sub="What's in your kitchen right now. Cooking a meal deducts from your Food Store automatically.">Food Store</SectionTitle>
             <div className="p-4 mb-4 flex flex-wrap gap-2 items-end" style={card}>
               <div className="flex flex-col"><label style={{ fontSize: 12, fontWeight: 800, color: C.deep }}>Item name</label>
                 <input style={inputStyle} placeholder="e.g. Snail" value={newItem.name} onChange={(e) => setNewItem({ ...newItem, name: e.target.value })} /></div>
@@ -706,11 +868,11 @@ export default function KitchenApp({ profile, session, onLogout, onUpgrade, clou
                 </select></div>
               <button style={{ ...btnRose, padding: "9px 20px" }} onClick={() => {
                 if (!newItem.name || !newItem.qty) return;
-                setPantry((p) => [...p, { id: Date.now(), name: newItem.name, cat: newItem.cat, qty: parseFloat(newItem.qty), unit: newItem.unit, low: 0 }]);
+                setPantry((p) => [...p, { id: Date.now(), name: newItem.name, cat: newItem.cat, qty: parseFloat(newItem.qty), unit: newItem.unit, low: Math.max(1, Math.round(parseFloat(newItem.qty) * 0.2)), tracked: true }]);
                 setNewItem({ name: "", qty: "", unit: "g", cat: "Grains" });
-                showToast("Item added to pantry 🧺");
+                showToast("Item added to your Food Store 🧺");
               }}>+ Add item</button>
-              <input style={{ ...inputStyle, marginLeft: "auto", minWidth: 160 }} placeholder="🔍 Search pantry…" value={pantrySearch} onChange={(e) => setPantrySearch(e.target.value)} />
+              <input style={{ ...inputStyle, marginLeft: "auto", minWidth: 160 }} placeholder="🔍 Search Food Store…" value={pantrySearch} onChange={(e) => setPantrySearch(e.target.value)} />
             </div>
 
             {["Grains", "Tubers", "Protein", "Vegetables", "Fruits & Veg", "Soup items", "Oils", "Spices", "Dairy & Drinks"].map((cat) => {
@@ -730,7 +892,7 @@ export default function KitchenApp({ profile, session, onLogout, onUpgrade, clou
                         </div>
                         <div className="flex gap-1">
                           <button style={{ ...btnSoft, padding: "2px 10px" }} onClick={() => setPantry((prev) => prev.map((x) => x.id === p.id ? { ...x, qty: Math.max(0, x.qty - (x.unit === "g" || x.unit === "ml" ? 100 : 1)) } : x))}>−</button>
-                          <button style={{ ...btnSoft, padding: "2px 10px" }} onClick={() => setPantry((prev) => prev.map((x) => x.id === p.id ? { ...x, qty: x.qty + (x.unit === "g" || x.unit === "ml" ? 100 : 1) } : x))}>+</button>
+                          <button style={{ ...btnSoft, padding: "2px 10px" }} onClick={() => setPantry((prev) => prev.map((x) => x.id === p.id ? { ...x, qty: x.qty + (x.unit === "g" || x.unit === "ml" ? 100 : 1), tracked: true } : x))}>+</button>
                         </div>
                       </div>
                     ))}
@@ -812,13 +974,35 @@ export default function KitchenApp({ profile, session, onLogout, onUpgrade, clou
         {tab === "recipes" && (
           <div>
             <SectionTitle icon="📖" sub={`Every quantity is scaled to your family's ${portions.toFixed(2)} portions. Mains never repeat in a week unless you tick "can repeat" — breakfasts are free to repeat.`}>Recipe Book</SectionTitle>
+            {/* Cuisine selector */}
+            <div className="flex gap-2 flex-wrap mb-3 items-center">
+              <span style={{ fontWeight: 800, color: C.deep, fontSize: 13 }}>Cuisine:</span>
+              {[["Both", "🍽️ Both"], ["Nigeria", "🇳🇬 Nigeria"], ["Cameroon", "🇨🇲 Cameroon"]].map(([val, lbl]) => (
+                <button key={val} style={{ ...(cuisine === val ? btnRose : btnSoft), padding: "6px 16px", fontSize: 13 }}
+                  onClick={() => { setCuisine(val); setRecipeFilter("All"); }}>{lbl}</button>
+              ))}
+            </div>
             <div className="flex gap-2 flex-wrap mb-4">
-              {["All", "Igbo", "Yoruba", "Hausa", "Efik / Ibibio", "Cameroon", "General", "Breakfast"].map((f) => (
+              {(cuisine === "Cameroon"
+                ? ["All", "Cameroon (NW)", "Cameroon (SW)", "Breakfast"]
+                : cuisine === "Nigeria"
+                ? ["All", "Igbo", "Yoruba", "Hausa", "Efik / Ibibio", "General", "Breakfast"]
+                : ["All", "Igbo", "Yoruba", "Hausa", "Efik / Ibibio", "Cameroon", "General", "Breakfast"]
+              ).map((f) => (
                 <button key={f} style={{ ...(recipeFilter === f ? btnRose : btnSoft), padding: "6px 14px", fontSize: 13 }} onClick={() => setRecipeFilter(f)}>{f}</button>
               ))}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {RECIPES.filter((r) => recipeFilter === "All" ? true : recipeFilter === "Breakfast" ? r.type === "breakfast" : recipeFilter === "Cameroon" ? r.origin.startsWith("Cameroon") : r.origin === recipeFilter).map((r, idx) => {
+              {RECIPES.filter((r) => {
+                // First, cuisine gate.
+                if (cuisine === "Nigeria" && r.origin.startsWith("Cameroon")) return false;
+                if (cuisine === "Cameroon" && !r.origin.startsWith("Cameroon")) return false;
+                // Then, sub-filter.
+                if (recipeFilter === "All") return true;
+                if (recipeFilter === "Breakfast") return r.type === "breakfast";
+                if (recipeFilter === "Cameroon") return r.origin.startsWith("Cameroon");
+                return r.origin === recipeFilter;
+              }).map((r, idx) => {
                 const locked = isGuest && idx >= 6;
                 return (
                 <div key={r.id} className="p-4 flex flex-col gap-2 cursor-pointer transition-transform hover:scale-105" style={{ ...card, opacity: locked ? 0.55 : 1 }}
@@ -853,21 +1037,41 @@ export default function KitchenApp({ profile, session, onLogout, onUpgrade, clou
         {/* ============ WEEKLY PLAN ============ */}
         {tab === "plan" && (
           <div>
-            <SectionTitle icon="🗓️" sub={`${mealsPerDay} meal(s)/day · ${effCook} cooking sessions · ${portions.toFixed(2)} portions · no dish repeats unless you allow it in the Recipe Book.`}>Weekly Cooking Plan</SectionTitle>
+            <SectionTitle icon="🗓️" sub={`${mealsPerDay} meal(s)/day · ${portions.toFixed(2)} portions · a varied week, with no main dish twice in a row unless it is an intended carryover.`}>Weekly Cooking Plan</SectionTitle>
             {isGuest && (
               <div className="p-6 text-center mb-4" style={card}>
                 <div style={{ fontSize: 40 }}>⭐🔒</div>
                 <h3 style={{ fontFamily: "'Fredoka', sans-serif", color: C.deep, fontWeight: 600, fontSize: 20, marginTop: 6 }}>The weekly planner is a full-access feature</h3>
                 <p style={{ color: C.brownSoft, fontSize: 14, marginTop: 6 }}>
                   Full members get the automatic Mon–Sun cooking schedule, batch-pot and freezer planning,
-                  pantry deduction, the shopping list, and cloud sync across devices.
+                  Food Store deduction, the shopping list, and cloud sync across devices.
                 </p>
                 <button className="mt-4" style={{ ...btnRose, padding: "12px 28px" }} onClick={onUpgrade}>⭐ Buy full access now</button>
               </div>
             )}
             {!isGuest && (<>
+            <div className="p-4 mb-4" style={card}>
+              <div className="flex gap-2 flex-wrap items-center mb-3">
+                <span style={{ fontWeight: 800, color: C.deep, fontSize: 13 }}>Cuisine:</span>
+                {[["Both", "🍽️ Both"], ["Nigeria", "🇳🇬 Nigeria"], ["Cameroon", "🇨🇲 Cameroon"]].map(([val, lbl]) => (
+                  <button key={val} style={{ ...(cuisine === val ? btnRose : btnSoft), padding: "6px 16px", fontSize: 13 }}
+                    onClick={() => { setCuisine(val); setPlan(null); }}>{lbl}</button>
+                ))}
+              </div>
+              <div className="flex gap-2 flex-wrap items-center">
+                <span style={{ fontWeight: 800, color: C.deep, fontSize: 13 }}>Cook once, eat for:</span>
+                {[[1, "Every meal fresh"], [2, "2 days"], [3, "3 days"]].map(([val, lbl]) => (
+                  <button key={val} style={{ ...(cookAhead === val ? btnRose : btnSoft), padding: "6px 16px", fontSize: 13 }}
+                    onClick={() => { setCookAhead(val); setPlan(null); }}>{lbl}</button>
+                ))}
+              </div>
+              <p style={{ fontSize: 12, color: C.brownSoft, marginTop: 8 }}>
+                Pick 2 or 3 days to cook a bigger pot once and carry it over (or freeze it) for the next day(s).
+                Freezer-friendly dishes will be labelled <b>❄️ From freezer</b>; same-pot repeats show as <b>♨️ Carryover</b>.
+              </p>
+            </div>
             <div className="flex gap-2 mb-4 flex-wrap">
-              <button style={{ ...btnRose, padding: "10px 24px" }} onClick={() => setPlan(generatePlan(mealsPerDay, effCook, repeatIds, pantry, portions))}>
+              <button style={{ ...btnRose, padding: "10px 24px" }} onClick={() => setPlan(generatePlan(mealsPerDay, effCook, repeatIds, pantry, portions, cuisine, cookAhead))}>
                 {plan ? "🔀 Shuffle plan" : "✨ Generate my week"}
               </button>
               {plan && <button style={{ ...btnSoft, padding: "10px 20px" }} onClick={() => setPlan(null)}>Clear</button>}
@@ -877,7 +1081,7 @@ export default function KitchenApp({ profile, session, onLogout, onUpgrade, clou
               <div className="p-8 text-center" style={card}>
                 <div style={{ fontSize: 44 }}>🍲🌸</div>
                 <p style={{ fontWeight: 700, color: C.brownSoft, marginTop: 6 }}>
-                  Tap "Generate my week" and Ite Nri will propose a full schedule, favouring dishes your pantry can already cook.
+                  Tap "Generate my week" and Ite Nri will propose a full schedule, favouring dishes your Food Store can already cook.
                 </p>
               </div>
             )}
@@ -899,11 +1103,15 @@ export default function KitchenApp({ profile, session, onLogout, onUpgrade, clou
                                 {r ? r.name : "—"}
                               </div>
                               <div className="flex justify-between items-center mt-2">
-                                {s.cook && <Badge color={C.rose}>👩🏾‍🍳 Cook fresh</Badge>}
+                                {s.cook && (
+                                  <Badge color={C.rose}>
+                                    👩🏾‍🍳 Cook fresh{s.cookAhead > 1 ? ` · big pot for ${s.cookAhead} days` : ""}
+                                  </Badge>
+                                )}
                                 {!s.cook && s.tag === "repeat" && <Badge color="#6A1B9A" bg="#F3E5F5">🔁 Breakfast repeat</Badge>}
-                                {!s.cook && s.tag === "freezer" && <Badge color="#0277BD" bg="#E1F5FE">❄️ From freezer</Badge>}
-                                {!s.cook && s.tag === "leftover" && (
-                                  <Badge color={C.amber} bg="#FFF3E0">♨️ Same pot{s.potDay ? ` · day ${Math.min(s.potDay, s.potLasts || s.potDay)} of ${s.potLasts}` : ""}</Badge>
+                                {!s.cook && (s.tag === "freezer" || s.fromFreezer) && <Badge color="#0277BD" bg="#E1F5FE">❄️ From freezer</Badge>}
+                                {!s.cook && s.tag === "leftover" && !s.fromFreezer && (
+                                  <Badge color={C.amber} bg="#FFF3E0">♨️ Carryover{s.potDay ? ` · day ${s.potDay} of ${s.potLasts}` : ""}</Badge>
                                 )}
                                 {s.cook && r && (
                                   <button style={{ ...btnSoft, padding: "3px 10px", fontSize: 12 }} onClick={() => cookRecipe(r)}>Cook ✓</button>
@@ -971,7 +1179,56 @@ export default function KitchenApp({ profile, session, onLogout, onUpgrade, clou
             </ol>
 
             <button className="w-full mt-5" style={{ ...btnRose, padding: "12px" }} onClick={() => { cookRecipe(selected); setSelected(null); }}>
-              🍲 Cook this now — deduct from pantry
+              🍲 Cook this now — deduct from Food Store
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ============ NOTIFICATIONS PANEL ============ */}
+      {showNotif && (
+        <div className="fixed inset-0 flex items-start justify-center p-4" style={{ background: "rgba(93,64,55,0.45)", zIndex: 55, paddingTop: 80 }} onClick={() => setShowNotif(false)}>
+          <div className="w-full max-w-md p-5" style={{ ...card, maxHeight: "80vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-3">
+              <h2 style={{ fontFamily: "'Fredoka', sans-serif", color: C.deep, fontSize: 20, fontWeight: 600 }}>🔔 Alerts</h2>
+              <button style={{ ...btnSoft, padding: "4px 12px" }} onClick={() => setShowNotif(false)}>✕</button>
+            </div>
+            <div className="flex flex-col gap-2">
+              {notifications.map((n, i) => (
+                <div key={i} className="flex items-start gap-3 p-3" style={{ background: n.kind === "stock" ? "#FFF3E0" : n.kind === "meal" ? C.soft : "#E8F5E9", borderRadius: 12 }}>
+                  <span style={{ fontSize: 18 }}>{n.icon}</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: C.brown }}>{n.text}</span>
+                </div>
+              ))}
+            </div>
+            {lowStock.length > 0 && (
+              <button className="w-full mt-4" style={{ ...btnSoft, padding: 10 }} onClick={() => { setShowNotif(false); setTab("pantry"); }}>
+                🥘 Go to Food Store to restock
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ============ WELCOME MODAL ============ */}
+      {showWelcome && (
+        <div className="fixed inset-0 flex items-center justify-center p-4" style={{ background: "rgba(93,64,55,0.5)", zIndex: 65 }} onClick={() => setShowWelcome(false)}>
+          <div className="w-full max-w-md p-7 text-center" style={{ ...card }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ fontSize: 46 }}>🍲🌸</div>
+            <h2 style={{ fontFamily: "'Fredoka', sans-serif", color: C.deep, fontSize: 24, fontWeight: 600, marginTop: 6 }}>
+              Welcome to {APP_NAME}!
+            </h2>
+            <p style={{ color: C.brown, fontSize: 15, marginTop: 10, lineHeight: 1.5 }}>
+              {profile.full_name ? `${profile.full_name}, y` : "Y"}our personal cooking companion is ready.
+              Start by adding what's in your <b>Food Store</b>, then let us plan a delicious week of
+              Nigerian and Cameroonian meals — with smart portions and less waste.
+            </p>
+            <p style={{ color: C.brownSoft, fontSize: 13, marginTop: 10 }}>Made with ❤️ by Jodel Technologies.</p>
+            <button className="w-full mt-5" style={{ ...btnRose, padding: 12 }} onClick={() => { setShowWelcome(false); setTab("pantry"); }}>
+              🥘 Let's stock my kitchen
+            </button>
+            <button className="w-full mt-2" style={{ ...btnSoft, padding: 10 }} onClick={() => setShowWelcome(false)}>
+              Explore first
             </button>
           </div>
         </div>

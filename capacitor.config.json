@@ -3,7 +3,7 @@
   "appName": "My Kitchen",
   "webDir": "dist",
   "server": {
-    "url": "https://YOUR-APP.vercel.app",
+    "url": "https://my-kitchen-eta.vercel.app",
     "cleartext": false
   }
 }
