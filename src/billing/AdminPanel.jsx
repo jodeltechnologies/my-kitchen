@@ -9,11 +9,13 @@ const input = { border: `1.5px solid ${C.border}`, borderRadius: 12, padding: "1
 const box = { background: C.soft, borderRadius: 14, padding: 14 };
 
 export default function AdminPanel({ onClose }) {
-  const [view, setView] = useState("payments"); // payments | devices | grant | coupons | admins
+  const [view, setView] = useState("payments"); // payments | devices | grant | coupons | admins | users
   const [rows, setRows] = useState([]);
   const [devices, setDevices] = useState([]);
   const [coupons, setCoupons] = useState([]);
   const [admins, setAdmins] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [userSearch, setUserSearch] = useState("");
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState(null); // { ok: bool, text: string }
 
@@ -34,6 +36,8 @@ export default function AdminPanel({ onClose }) {
     setCoupons(cps || []);
     const { data: adm } = await supabase.from("admins").select("*").order("created_at", { ascending: false }).limit(50);
     setAdmins(adm || []);
+    const { data: usr } = await supabase.rpc("admin_list_users");
+    setUsers(usr || []);
   };
   useEffect(() => { load(); }, []);
 
@@ -88,6 +92,12 @@ export default function AdminPanel({ onClose }) {
 
   const demote = (email) => run(async () => { await supabase.rpc("remove_admin", { p_email: email }); });
 
+  const sendReset = (email) => run(async () => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
+    if (error) throw error;
+    setNote({ ok: true, text: `Password reset link sent to ${email}.` });
+  });
+
   const pendingDevices = devices.filter((d) => d.status === "pending");
   const otherDevices = devices.filter((d) => d.status !== "pending");
 
@@ -104,6 +114,7 @@ export default function AdminPanel({ onClose }) {
           <button style={tab(view === "devices")} onClick={() => setView("devices")}>📱 Devices{pendingDevices.length ? ` (${pendingDevices.length})` : ""}</button>
           <button style={tab(view === "grant")} onClick={() => setView("grant")}>🎁 Free access</button>
           <button style={tab(view === "coupons")} onClick={() => setView("coupons")}>🎟 Coupons</button>
+          <button style={tab(view === "users")} onClick={() => setView("users")}>👥 Users</button>
           <button style={tab(view === "admins")} onClick={() => setView("admins")}>👑 Admins</button>
         </div>
 
@@ -232,6 +243,44 @@ export default function AdminPanel({ onClose }) {
                   {c.active && <button disabled={busy} style={{ ...btnSoft, padding: "5px 14px" }} onClick={() => killCoupon(c.code)}>Turn off</button>}
                 </div>
               ))}
+            </div>
+          </>
+        )}
+
+        {/* ---- USERS ---- */}
+        {view === "users" && (
+          <>
+            <p style={{ color: C.brownSoft, fontWeight: 700, fontSize: 13, marginBottom: 10 }}>
+              Everyone who has an account. If someone forgot their password, tap “Reset link” to email them a link to set a new one.
+            </p>
+            <input style={{ ...input, marginBottom: 12 }} placeholder="🔍 Search by email or name" value={userSearch} onChange={(e) => setUserSearch(e.target.value)} />
+            {users.length === 0 && <p style={{ color: C.brownSoft, fontWeight: 700 }}>No users yet.</p>}
+            <div className="flex flex-col gap-2">
+              {users
+                .filter((u) => {
+                  const q = userSearch.trim().toLowerCase();
+                  if (!q) return true;
+                  return (u.email || "").toLowerCase().includes(q) || (u.full_name || "").toLowerCase().includes(q);
+                })
+                .map((u) => {
+                  const active = u.plan === "full" && (!u.plan_expires_at || new Date(u.plan_expires_at) > new Date());
+                  return (
+                    <div key={u.id} className="p-3 flex flex-wrap justify-between items-center gap-2" style={{ background: C.soft, borderRadius: 14, fontSize: 13 }}>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontWeight: 800, color: C.deep, wordBreak: "break-all" }}>
+                          {u.email}{u.is_admin ? " 👑" : ""}
+                        </div>
+                        <div style={{ color: C.brownSoft, fontWeight: 700 }}>
+                          {u.full_name || "—"} · {active ? "✅ Full" : "Guest"}
+                          {u.plan_expires_at ? ` · until ${new Date(u.plan_expires_at).toLocaleDateString()}` : (active ? " · lifetime" : "")}
+                        </div>
+                      </div>
+                      <button disabled={busy} style={{ ...btnSoft, padding: "6px 14px" }} onClick={() => sendReset(u.email)}>
+                        🔑 Reset link
+                      </button>
+                    </div>
+                  );
+                })}
             </div>
           </>
         )}

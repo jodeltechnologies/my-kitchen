@@ -9,17 +9,29 @@ const btn = { background: C.rose, color: "#fff", border: "none", borderRadius: 9
 const btnSoft = { ...btn, background: C.soft, color: C.deep, border: `1.5px solid ${C.border}` };
 
 export default function AuthScreen() {
-  const [mode, setMode] = useState("login"); // login | signup
+  const [mode, setMode] = useState("login"); // login | signup | reset
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
+  const [ok, setOk] = useState(null); // success message
 
   const run = async (fn) => {
-    setBusy(true); setMsg(null);
+    setBusy(true); setMsg(null); setOk(null);
     const { error } = await fn();
     if (error) setMsg(error.message);
+    setBusy(false);
+  };
+
+  const sendReset = async () => {
+    if (!email.trim()) { setMsg("Enter your email first, then tap reset."); return; }
+    setBusy(true); setMsg(null); setOk(null);
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: window.location.origin,
+    });
+    if (error) setMsg(error.message);
+    else setOk("Check your email 📧 — we sent a link to reset your password.");
     setBusy(false);
   };
 
@@ -35,13 +47,32 @@ export default function AuthScreen() {
 
         <div className="flex gap-2 mb-5">
           {["login", "signup"].map((m) => (
-            <button key={m} onClick={() => setMode(m)}
-              style={{ ...(mode === m ? btn : btnSoft), padding: "9px" }}>
+            <button key={m} onClick={() => { setMode(m); setMsg(null); setOk(null); }}
+              style={{ ...(mode === m || (m === "login" && mode === "reset") ? btn : btnSoft), padding: "9px" }}>
               {m === "login" ? "Log in" : "Create account"}
             </button>
           ))}
         </div>
 
+        {/* ---- FORGOT PASSWORD ---- */}
+        {mode === "reset" ? (
+          <div className="flex flex-col gap-3">
+            <p style={{ fontSize: 13, color: C.brown, fontWeight: 700 }}>
+              Forgot your password? No problem. Enter your email and we'll send you a link to set a new one. 🔑
+            </p>
+            <input style={input} type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+
+            {msg && <div style={{ color: C.rose, fontSize: 13, fontWeight: 700 }}>{msg}</div>}
+            {ok && <div style={{ color: "#2E7D32", fontSize: 13, fontWeight: 700 }}>{ok}</div>}
+
+            <button disabled={busy} style={btn} onClick={sendReset}>
+              {busy ? "Sending…" : "📧 Send reset link"}
+            </button>
+            <button disabled={busy} style={btnSoft} onClick={() => { setMode("login"); setMsg(null); setOk(null); }}>
+              ← Back to log in
+            </button>
+          </div>
+        ) : (
         <div className="flex flex-col gap-3">
           {mode === "signup" && (
             <input style={input} placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)} />
@@ -50,6 +81,7 @@ export default function AuthScreen() {
           <input style={input} type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
 
           {msg && <div style={{ color: C.rose, fontSize: 13, fontWeight: 700 }}>{msg}</div>}
+          {ok && <div style={{ color: "#2E7D32", fontSize: 13, fontWeight: 700 }}>{ok}</div>}
 
           <button disabled={busy} style={btn} onClick={() =>
             mode === "login"
@@ -58,6 +90,13 @@ export default function AuthScreen() {
           }>
             {busy ? "Please wait…" : mode === "login" ? "Log in" : "Sign up (starts as free trial)"}
           </button>
+
+          {mode === "login" && (
+            <button onClick={() => { setMode("reset"); setMsg(null); setOk(null); }}
+              style={{ background: "none", border: "none", color: C.rose, fontWeight: 700, fontSize: 13, cursor: "pointer", padding: 0 }}>
+              Forgot password?
+            </button>
+          )}
 
           <div className="text-center" style={{ color: C.brownSoft, fontSize: 12, fontWeight: 700 }}>— or —</div>
 
@@ -69,6 +108,7 @@ export default function AuthScreen() {
             Guests and new accounts get a free taste of the recipe book. Full access is $20 for activation + first month, then just $5/month — pay by PayPal (instant) or MTN MoMo.
           </p>
         </div>
+        )}
       </div>
       <div className="w-full max-w-md"><Footer /></div>
     </div>

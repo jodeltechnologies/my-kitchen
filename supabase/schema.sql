@@ -486,3 +486,43 @@ begin
     return 'Coupon applied: ' || c.percent_off || '% off at checkout.';
   end if;
 end $$;
+
+-- ============================================================
+-- 7. PASSWORD RESET + ADMIN USER LISTING
+-- (added for: forgotten-password flow + admin "Users" tab)
+-- ============================================================
+
+-- Admin action: list all users so an admin can see everyone
+-- and trigger a password reset for them. Returns email, name,
+-- plan, admin flag, expiry and join date. Admin-only.
+create or replace function public.admin_list_users()
+returns table (
+  id uuid,
+  email text,
+  full_name text,
+  plan text,
+  is_admin boolean,
+  plan_expires_at timestamptz,
+  created_at timestamptz
+)
+language plpgsql stable security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'Only an admin can list users'; end if;
+  return query
+    select u.id,
+           u.email::text,
+           p.full_name,
+           p.plan,
+           coalesce(p.is_admin, false),
+           p.plan_expires_at,
+           u.created_at
+      from auth.users u
+      left join profiles p on p.id = u.id
+     where u.email is not null            -- skip anonymous guest accounts
+     order by u.created_at desc;
+end $$;
+
+-- Note: the actual reset EMAIL is sent from the browser using
+-- Supabase's built-in supabase.auth.resetPasswordForEmail(email).
+-- That call only needs the email address, so an admin can trigger
+-- it for any user shown by admin_list_users(). No extra SQL needed.
