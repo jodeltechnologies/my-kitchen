@@ -22,9 +22,9 @@ export const PLANS = {
     { period: "firstyearly",  label: "Activation + 12 months", usd: 65, note: "Best value — save $10" },
   ],
   renewal: [
-    { period: "monthly", label: "1 month",   usd: 5,  note: "Standard renewal" },
-    { period: "6months", label: "6 months",  usd: 27, note: "Save $3" },
-    { period: "yearly",  label: "12 months", usd: 50, note: "Best value — save $10" },
+    { period: "monthly", label: "1 month",   usd: 1.67, note: "Standard renewal" },
+    { period: "6months", label: "6 months",  usd: 9,    note: "Save ~1,000 CFA" },
+    { period: "yearly",  label: "12 months", usd: 17,   note: "Best value — save ~3,000 CFA" },
   ],
 };
 

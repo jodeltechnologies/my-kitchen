@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import Footer from "../ui/Footer";
 import { APP_NAME } from "../config";
+import { supabase } from "../lib/supabase";
 
 /* ================= THEME ================= */
 const C = {
@@ -605,9 +606,10 @@ function SectionTitle({ icon, children, sub }) {
 }
 
 /* ================= MAIN APP ================= */
-export default function KitchenApp({ profile, session, onLogout, onUpgrade, cloudSave, cloudLoad }) {
+export default function KitchenApp({ profile, session, onLogout, onUpgrade, onRedeemed, cloudSave, cloudLoad }) {
   const isGuest = profile.plan !== "full";
   const [tab, setTab] = useState("dashboard");
+  const [showVoucher, setShowVoucher] = useState(false);
   const [family, setFamily] = useState([
     { id: 1, name: "Papa", age: 38 },
     { id: 2, name: "Mama", age: 34 },
@@ -773,7 +775,10 @@ export default function KitchenApp({ profile, session, onLogout, onUpgrade, clou
             ? <Badge color="#B26A00" bg="#FFF3E0">👀 Guest trial</Badge>
             : <Badge color={C.green} bg="#E8F5E9">⭐ Full access{profile.plan_expires_at ? " until " + new Date(profile.plan_expires_at).toLocaleDateString() : ""}</Badge>}
           {isGuest && (
-            <button style={{ ...btnRose, padding: "4px 14px", fontSize: 13 }} onClick={onUpgrade}>⭐ Buy full access — $20 first, then $5/mo</button>
+            <button style={{ ...btnRose, padding: "4px 14px", fontSize: 13 }} onClick={onUpgrade}>⭐ Buy full access — $20 first, then 1,000 CFA/mo</button>
+          )}
+          {isGuest && (
+            <button style={{ ...btnSoft, padding: "4px 14px", fontSize: 13 }} onClick={() => setShowVoucher(true)}>🎟 Have a voucher?</button>
           )}
           {!isGuest && (
             <button style={{ ...btnSoft, padding: "4px 14px", fontSize: 13 }} onClick={saveCloud}>☁️ Save to cloud</button>
@@ -1235,11 +1240,67 @@ export default function KitchenApp({ profile, session, onLogout, onUpgrade, clou
       )}
 
       {/* Toast */}
+      {showVoucher && (
+        <VoucherModal
+          onClose={() => setShowVoucher(false)}
+          onRedeemed={onRedeemed}
+        />
+      )}
       {toast && (
         <div className="fixed bottom-6 left-1/2 px-5 py-3" style={{ transform: "translateX(-50%)", background: C.deep, color: "#fff", borderRadius: 999, fontWeight: 700, zIndex: 60, boxShadow: "0 6px 20px rgba(0,0,0,0.25)" }}>
           {toast}
         </div>
       )}
+    </div>
+  );
+}
+
+/* ---- Voucher / ticket entry (try before buying) ---- */
+function VoucherModal({ onClose, onRedeemed }) {
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState(null); // { ok, text }
+
+  const redeem = async () => {
+    if (!code.trim()) { setMsg({ ok: false, text: "Enter your voucher code." }); return; }
+    setBusy(true); setMsg(null);
+    try {
+      const { data, error } = await supabase.rpc("redeem_coupon", { p_code: code.trim() });
+      if (error) throw error;
+      setMsg({ ok: true, text: data || "Voucher applied!" });
+      setCode("");
+      if (onRedeemed) await onRedeemed();
+    } catch (e) {
+      setMsg({ ok: false, text: e.message || "That voucher could not be applied." });
+    }
+    setBusy(false);
+  };
+
+  const input = { border: `1.5px solid ${C.border}`, borderRadius: 12, padding: "11px 14px", background: "#FFF9FB", color: C.brown, outline: "none", width: "100%", fontFamily: "inherit", textTransform: "uppercase" };
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.35)", zIndex: 90, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 400, background: "#fff", border: `1.5px solid ${C.border}`, borderRadius: 22, padding: 24, boxShadow: "0 10px 30px rgba(216,27,96,0.18)" }}>
+        <div className="flex justify-between items-center" style={{ marginBottom: 6 }}>
+          <div style={{ fontFamily: "'Fredoka', sans-serif", fontSize: 22, fontWeight: 600, color: C.deep }}>🎟 Redeem a voucher</div>
+          <button onClick={onClose} style={{ ...btnSoft, padding: "4px 12px" }}>✕</button>
+        </div>
+        <p style={{ color: C.brownSoft, fontSize: 13, fontWeight: 700, marginBottom: 14 }}>
+          Got a voucher or ticket? Enter it here to unlock full access and try everything — no payment needed.
+        </p>
+        <input style={input} placeholder="Enter voucher code" value={code}
+          onChange={(e) => setCode(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") redeem(); }} />
+        {msg && (
+          <div style={{ marginTop: 12, fontSize: 13, fontWeight: 700, color: msg.ok ? C.green : C.rose }}>
+            {msg.ok ? "✅ " : "⚠️ "}{msg.text}
+          </div>
+        )}
+        <button disabled={busy} onClick={redeem}
+          style={{ ...btnRose, width: "100%", padding: "12px", marginTop: 14 }}>
+          {busy ? "Applying…" : "Apply voucher"}
+        </button>
+      </div>
     </div>
   );
 }

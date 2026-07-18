@@ -100,7 +100,7 @@ export default function App() {
 
   return (
     <>
-      <KitchenApp profile={effProfile} session={session} onLogout={logout} onUpgrade={upgrade} cloudSave={cloudSave} cloudLoad={cloudLoad} />
+      <KitchenApp profile={effProfile} session={session} onLogout={logout} onUpgrade={upgrade} onRedeemed={refresh} cloudSave={cloudSave} cloudLoad={cloudLoad} />
       {showBilling && (
         <Billing profile={profile} onClose={() => setShowBilling(false)}
           onPaid={async () => { await refresh(); setShowBilling(false); }} />

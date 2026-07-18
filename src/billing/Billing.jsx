@@ -92,8 +92,8 @@ export default function Billing({ profile, onClose, onPaid }) {
         </div>
         <p style={{ fontSize: 13, color: C.brownSoft, marginTop: 4 }}>
           {isNew
-            ? "First payment is $20 (activation + your first month). After that it's just $5/month — or grab a bundle and save."
-            : "Renew your subscription — $5/month, with discounts on bundles."}
+            ? "First payment is $20 (activation + your first month). After that it's just 1,000 CFA/month — or grab a bundle and save."
+            : "Renew your subscription — 1,000 CFA/month, with discounts on bundles."}
         </p>
 
         {/* Pending momo notice */}
@@ -120,6 +120,22 @@ export default function Billing({ profile, onClose, onPaid }) {
               </span>
             </button>
           ))}
+        </div>
+
+        {/* Voucher / ticket */}
+        <div className="mt-4 p-3" style={{ background: C.soft, borderRadius: 14 }}>
+          <div style={{ fontSize: 13, fontWeight: 800, color: C.deep, marginBottom: 6 }}>🎟 Have a voucher or ticket?</div>
+          <div className="flex gap-2">
+            <input style={{ ...input, textTransform: "uppercase" }} placeholder="Enter voucher code" value={coupon}
+              onChange={(e) => setCoupon(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") redeem(); }} />
+            <button style={{ ...btn, padding: "10px 18px" }} onClick={redeem}>Apply</button>
+          </div>
+          {couponMsg && (
+            <div style={{ marginTop: 8, fontSize: 12, fontWeight: 700, color: couponMsg.toLowerCase().includes("success") || couponMsg.toLowerCase().includes("full access") ? C.green : C.rose }}>
+              {couponMsg}
+            </div>
+          )}
         </div>
 
         {/* Method picker */}
