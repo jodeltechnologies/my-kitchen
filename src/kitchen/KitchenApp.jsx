@@ -629,6 +629,7 @@ export default function KitchenApp({ profile, session, onLogout, onUpgrade, onRe
   const [recipeFilter, setRecipeFilter] = useState("All");
   const [cuisine, setCuisine] = useState("Both");   // Nigeria | Cameroon | Both
   const [cookAhead, setCookAhead] = useState(1);      // 1 = cook each meal; 2/3 = cook once, eat 2/3 days
+  const [editFreezer, setEditFreezer] = useState(null); // { day, meal } slot being re-chosen
   const [showNotif, setShowNotif] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
 
@@ -699,6 +700,26 @@ export default function KitchenApp({ profile, session, onLogout, onUpgrade, onRe
   };
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2600); };
+
+  // Freezer-friendly dishes the client can choose from for a freezer meal.
+  const freezerChoices = useMemo(
+    () => RECIPES.filter((r) => r.type === "main" && r.freeze),
+    []
+  );
+
+  // Swap the dish used for a specific freezer meal slot.
+  const swapFreezerMeal = (day, meal, recipeId) => {
+    setPlan((prev) =>
+      prev.map((s) =>
+        s.day === day && s.meal === meal
+          ? { ...s, recipeId, fromFreezer: true, tag: "freezer", cook: false, edited: true }
+          : s
+      )
+    );
+    setEditFreezer(null);
+    showToast("Freezer meal updated ❄️");
+  };
+
 
   const cookRecipe = (recipe) => {
     if (isGuest) { showToast("🔒 Cooking with Food Store deduction is for full members — upgrade to unlock"); return; }
@@ -1071,8 +1092,9 @@ export default function KitchenApp({ profile, session, onLogout, onUpgrade, onRe
                 ))}
               </div>
               <p style={{ fontSize: 12, color: C.brownSoft, marginTop: 8 }}>
-                Pick 2 or 3 days to cook a bigger pot once and carry it over (or freeze it) for the next day(s).
-                Freezer-friendly dishes will be labelled <b>❄️ From freezer</b>; same-pot repeats show as <b>♨️ Carryover</b>.
+                Pick 2 or 3 days to cook one bigger pot, then carry it over (or freeze it) for the next day(s).
+                On those carryover days you only cook a <b>fresh breakfast</b> — lunch and dinner come from the pot or freezer, marked <b>no cooking</b>.
+                Freezer meals show <b>❄️ From freezer</b> with a reminder to defrost the day before; tap <b>Change ❄️</b> to pick a different frozen dish.
               </p>
             </div>
             <div className="flex gap-2 mb-4 flex-wrap">
@@ -1114,14 +1136,22 @@ export default function KitchenApp({ profile, session, onLogout, onUpgrade, onRe
                                   </Badge>
                                 )}
                                 {!s.cook && s.tag === "repeat" && <Badge color="#6A1B9A" bg="#F3E5F5">🔁 Breakfast repeat</Badge>}
-                                {!s.cook && (s.tag === "freezer" || s.fromFreezer) && <Badge color="#0277BD" bg="#E1F5FE">❄️ From freezer</Badge>}
+                                {!s.cook && (s.tag === "freezer" || s.fromFreezer) && <Badge color="#0277BD" bg="#E1F5FE">❄️ From freezer · no cooking</Badge>}
                                 {!s.cook && s.tag === "leftover" && !s.fromFreezer && (
-                                  <Badge color={C.amber} bg="#FFF3E0">♨️ Carryover{s.potDay ? ` · day ${s.potDay} of ${s.potLasts}` : ""}</Badge>
+                                  <Badge color={C.amber} bg="#FFF3E0">🍲 From the pot · no cooking{s.potDay ? ` · day ${s.potDay} of ${s.potLasts}` : ""}</Badge>
                                 )}
                                 {s.cook && r && (
                                   <button style={{ ...btnSoft, padding: "3px 10px", fontSize: 12 }} onClick={() => cookRecipe(r)}>Cook ✓</button>
                                 )}
+                                {!s.cook && (s.tag === "freezer" || s.fromFreezer) && (
+                                  <button style={{ ...btnSoft, padding: "3px 10px", fontSize: 12 }} onClick={() => setEditFreezer({ day: s.day, meal: s.meal })}>Change ❄️</button>
+                                )}
                               </div>
+                              {!s.cook && (s.tag === "freezer" || s.fromFreezer) && (
+                                <div style={{ marginTop: 6, fontSize: 11, fontWeight: 700, color: "#0277BD" }}>
+                                  ⏰ Take this out of the freezer the day before to defrost.
+                                </div>
+                              )}
                             </div>
                           );
                         })}
@@ -1245,6 +1275,31 @@ export default function KitchenApp({ profile, session, onLogout, onUpgrade, onRe
           onClose={() => setShowVoucher(false)}
           onRedeemed={onRedeemed}
         />
+      )}
+      {editFreezer && (
+        <div onClick={() => setEditFreezer(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.35)", zIndex: 90, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 420, background: "#fff", border: `1.5px solid ${C.border}`, borderRadius: 22, padding: 22, maxHeight: "80vh", overflowY: "auto", boxShadow: "0 10px 30px rgba(2,119,189,0.18)" }}>
+            <div className="flex justify-between items-center" style={{ marginBottom: 6 }}>
+              <div style={{ fontFamily: "'Fredoka', sans-serif", fontSize: 20, fontWeight: 600, color: "#0277BD" }}>❄️ Choose a freezer dish</div>
+              <button onClick={() => setEditFreezer(null)} style={{ ...btnSoft, padding: "4px 12px" }}>✕</button>
+            </div>
+            <p style={{ color: C.brownSoft, fontSize: 12, fontWeight: 700, marginBottom: 12 }}>
+              For {editFreezer.meal} on {editFreezer.day}. These dishes freeze well — remember to take it out the day before.
+            </p>
+            <div className="flex flex-col gap-2">
+              {freezerChoices.map((r) => (
+                <button key={r.id} onClick={() => swapFreezerMeal(editFreezer.day, editFreezer.meal, r.id)}
+                  className="text-left p-3" style={{ background: "#E1F5FE", border: "1.5px solid #B3E5FC", borderRadius: 14, cursor: "pointer" }}>
+                  <div style={{ fontWeight: 800, color: C.deep, fontSize: 14 }}>{r.name}</div>
+                  <div style={{ fontSize: 12, color: C.brownSoft, fontWeight: 700 }}>{r.origin || "General"} · keeps {r.lasts || 1} day(s) · ❄️ freezer-ok</div>
+                </button>
+              ))}
+              {freezerChoices.length === 0 && (
+                <div style={{ fontSize: 13, color: C.brownSoft, fontWeight: 700 }}>No freezer-friendly dishes available.</div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
       {toast && (
         <div className="fixed bottom-6 left-1/2 px-5 py-3" style={{ transform: "translateX(-50%)", background: C.deep, color: "#fff", borderRadius: 999, fontWeight: 700, zIndex: 60, boxShadow: "0 6px 20px rgba(0,0,0,0.25)" }}>
