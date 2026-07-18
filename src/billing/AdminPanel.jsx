@@ -92,6 +92,14 @@ export default function AdminPanel({ onClose }) {
 
   const demote = (email) => run(async () => { await supabase.rpc("remove_admin", { p_email: email }); });
 
+  // Flip a user between admin and non-admin straight from the Users list.
+  const toggleAdmin = (email, makeAdmin) => run(async () => {
+    if (!email) throw new Error("This user has no email on file.");
+    const { error } = await supabase.rpc(makeAdmin ? "add_admin" : "remove_admin", { p_email: email });
+    if (error) throw error;
+    setNote({ ok: true, text: makeAdmin ? `${email} is now an admin.` : `${email} is no longer an admin.` });
+  });
+
   const sendReset = (email) => run(async () => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
     if (error) throw error;
@@ -275,9 +283,16 @@ export default function AdminPanel({ onClose }) {
                           {u.plan_expires_at ? ` · until ${new Date(u.plan_expires_at).toLocaleDateString()}` : (active ? " · lifetime" : "")}
                         </div>
                       </div>
-                      <button disabled={busy} style={{ ...btnSoft, padding: "6px 14px" }} onClick={() => sendReset(u.email)}>
-                        🔑 Reset link
-                      </button>
+                      <div className="flex gap-2 items-center">
+                        <button disabled={busy}
+                          style={{ ...btnSoft, padding: "6px 14px", ...(u.is_admin ? {} : { background: C.rose, color: "#fff", border: "none" }) }}
+                          onClick={() => toggleAdmin(u.email, !u.is_admin)}>
+                          {u.is_admin ? "Remove admin" : "👑 Make admin"}
+                        </button>
+                        <button disabled={busy} style={{ ...btnSoft, padding: "6px 14px" }} onClick={() => sendReset(u.email)}>
+                          🔑 Reset link
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
