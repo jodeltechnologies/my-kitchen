@@ -555,26 +555,41 @@ function generatePlan(mealsPerDay, cookSessions, repeatIds, pantry, portions, cu
       return { ...slot, recipeId: pick.id, cook: true, tag: "fresh" };
     }
 
-    // MAIN meals: use carryover pot if one is still good, else cook fresh.
-    if (potLeft > 0 && potInfo) {
-      potLeft -= 1;
-      const daysIn = dayIdx - potInfo.cookDayIdx + 1;
-      const withinShelf = daysIn <= (potInfo.lasts || 1);
-      const tag = withinShelf ? "leftover" : (potInfo.freeze ? "freezer" : "leftover");
+    // MAIN meals (lunch/dinner). One pot per cook-day covers BOTH lunch and
+    // dinner, and stretches for the full cookAhead days (freezing when the dish
+    // doesn't naturally last that long).
+    const daysIntoPot = potInfo ? (dayIdx - potInfo.cookDayIdx + 1) : 999;
+    const potStillCovers = potInfo && daysIntoPot <= cookAhead;
+
+    if (potStillCovers) {
+      // We already have a pot covering today. Is this the fresh-cook slot or a
+      // "no cooking" carryover/freezer slot?
+      const isCookSlotToday = potInfo.cookDayIdx === dayIdx && !potInfo.cookedToday;
+      if (isCookSlotToday) {
+        // First main meal on the cook-day = cook the fresh pot.
+        potInfo.cookedToday = true;
+        curDayMainId = potInfo.id;
+        return { ...slot, recipeId: potInfo.id, cook: true, tag: "fresh", cookAhead };
+      }
+      // Every other main meal (2nd meal same day, or any meal on carryover days)
+      // is served from the pot — no cooking. Beyond natural shelf life = freezer.
+      const withinShelf = daysIntoPot <= (potInfo.lasts || 1);
+      const fromFreezer = !withinShelf; // forced to last full cookAhead -> freeze
       curDayMainId = potInfo.id;
-      return { ...slot, recipeId: potInfo.id, cook: false, tag, potDay: daysIn, potLasts: potInfo.lasts, fromFreezer: !withinShelf && potInfo.freeze };
+      return {
+        ...slot, recipeId: potInfo.id, cook: false,
+        tag: fromFreezer ? "freezer" : "leftover",
+        potDay: daysIntoPot, potLasts: cookAhead, fromFreezer,
+      };
     }
 
-    // Cook a fresh main.
+    // No pot covering today -> start a new one (cook fresh).
     const pick = pickMain(dayIdx);
     usedMains.add(pick.id);
     lastMainId = pick.id;
     curDayMainId = pick.id;
-    // Set up the pot: how many future MAIN slots it will cover.
-    const span = Math.max(1, Math.min(cookAhead, pick.lasts && pick.freeze ? cookAhead : (pick.lasts || 1)));
-    potInfo = { id: pick.id, cookDayIdx: dayIdx, lasts: pick.lasts || 1, freeze: !!pick.freeze };
-    potLeft = span - 1; // this slot is day 1; remaining days are carryover
-    return { ...slot, recipeId: pick.id, cook: true, tag: "fresh", cookAhead: span };
+    potInfo = { id: pick.id, cookDayIdx: dayIdx, lasts: pick.lasts || 1, freeze: !!pick.freeze, cookedToday: true };
+    return { ...slot, recipeId: pick.id, cook: true, tag: "fresh", cookAhead };
   });
 
   return result;
@@ -718,6 +733,22 @@ export default function KitchenApp({ profile, session, onLogout, onUpgrade, onRe
     );
     setEditFreezer(null);
     showToast("Freezer meal updated ❄️");
+  };
+
+  // Manually turn ANY meal into a freezer meal, or back to fresh-cook.
+  const toggleFreezerMeal = (day, meal) => {
+    setPlan((prev) =>
+      prev.map((s) => {
+        if (s.day !== day || s.meal !== meal) return s;
+        if (s.fromFreezer || s.tag === "freezer") {
+          // Turn it back to a fresh-cooked meal.
+          return { ...s, fromFreezer: false, tag: "fresh", cook: true, edited: true };
+        }
+        // Mark it as a freezer meal (no cooking).
+        return { ...s, fromFreezer: true, tag: "freezer", cook: false, edited: true };
+      })
+    );
+    showToast("Meal set to freezer ❄️ — you can tap Change to pick the dish");
   };
 
 
@@ -1092,9 +1123,9 @@ export default function KitchenApp({ profile, session, onLogout, onUpgrade, onRe
                 ))}
               </div>
               <p style={{ fontSize: 12, color: C.brownSoft, marginTop: 8 }}>
-                Pick 2 or 3 days to cook one bigger pot, then carry it over (or freeze it) for the next day(s).
-                On those carryover days you only cook a <b>fresh breakfast</b> — lunch and dinner come from the pot or freezer, marked <b>no cooking</b>.
-                Freezer meals show <b>❄️ From freezer</b> with a reminder to defrost the day before; tap <b>Change ❄️</b> to pick a different frozen dish.
+                One pot per cook-day covers <b>both lunch and dinner</b>. With <b>2 days</b> you cook fresh lunch/dinner about 3 times a week; with <b>3 days</b> about twice a week.
+                On the in-between days you only cook a <b>fresh breakfast</b> — lunch and dinner come from the pot or freezer, marked <b>no cooking</b>.
+                Freezer meals show a reminder to defrost the day before; tap <b>Change ❄️</b> to pick a different frozen dish, <b>❄️ Freeze</b> to send any meal to the freezer, or <b>↩︎ Cook instead</b> to undo.
               </p>
             </div>
             <div className="flex gap-2 mb-4 flex-wrap">
@@ -1143,8 +1174,14 @@ export default function KitchenApp({ profile, session, onLogout, onUpgrade, onRe
                                 {s.cook && r && (
                                   <button style={{ ...btnSoft, padding: "3px 10px", fontSize: 12 }} onClick={() => cookRecipe(r)}>Cook ✓</button>
                                 )}
+                                {s.cook && (
+                                  <button style={{ ...btnSoft, padding: "3px 10px", fontSize: 12, color: "#0277BD", borderColor: "#B3E5FC", background: "#E1F5FE" }} onClick={() => toggleFreezerMeal(s.day, s.meal)}>❄️ Freeze</button>
+                                )}
                                 {!s.cook && (s.tag === "freezer" || s.fromFreezer) && (
                                   <button style={{ ...btnSoft, padding: "3px 10px", fontSize: 12 }} onClick={() => setEditFreezer({ day: s.day, meal: s.meal })}>Change ❄️</button>
+                                )}
+                                {!s.cook && (s.tag === "freezer" || s.fromFreezer) && (
+                                  <button style={{ ...btnSoft, padding: "3px 10px", fontSize: 12 }} onClick={() => toggleFreezerMeal(s.day, s.meal)}>↩︎ Cook instead</button>
                                 )}
                               </div>
                               {!s.cook && (s.tag === "freezer" || s.fromFreezer) && (
