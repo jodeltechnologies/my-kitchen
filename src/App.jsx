@@ -62,7 +62,9 @@ export default function App() {
 
   const upgrade = () => setShowBilling(true);
 
-  const isAdmin = profile?.is_admin === true || session?.user?.email === DEV.email;
+  const isAdmin =
+    profile?.is_admin === true ||
+    (session?.user?.email || "").toLowerCase() === (DEV.email || "").toLowerCase();
 
   // Full access = admin, OR plan is 'full' and not expired (null expiry = lifetime).
   const fullAccess =
@@ -89,7 +91,7 @@ export default function App() {
     return <SetNewPassword onDone={() => setRecovery(false)} onCancel={async () => { setRecovery(false); await logout(); }} />;
   }
   if (!session) return <AuthScreen />;
-  if (deviceStatus && deviceStatus !== "active") {
+  if (deviceStatus && deviceStatus !== "active" && !isAdmin) {
     return <DevicePending session={session} onRecheck={refresh} onLogout={logout} />;
   }
   if (!profile || !deviceStatus) {
